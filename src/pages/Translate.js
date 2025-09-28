@@ -2,26 +2,35 @@ import React, { useState } from "react";
 import VideoInput from "../components/VideoInput";
 import TextOutput from "../components/TextOutput";
 import SpeechButton from "../components/SpeechButton";
-import { translateSignToText } from "../services/api";
 
 function Translate() {
-  const [translation, setTranslation] = useState("");
+  const [prediction, setPrediction] = useState("");
 
-  const handleTranslate = async (videoData) => {
+  // ---- ML API call ----
+  const sendFrame = async (blob) => {
     try {
-      const res = await translateSignToText(videoData);
-      setTranslation(res.data.translation);
+      const formData = new FormData();
+      formData.append("file", blob, "frame.jpg");
+
+      const res = await fetch("http://localhost:8000/predict/", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+      setPrediction(data.prediction);
     } catch (err) {
-      console.error("Translation error:", err);
+      console.error("Prediction error:", err);
     }
   };
 
   return (
     <div className="translate-page">
       <h2>Sign Language Translator</h2>
-      <VideoInput onTranslate={handleTranslate} />
-      <TextOutput text={translation} />
-      <SpeechButton text={translation} />
+      {/* Pass sendFrame to VideoInput */}
+      <VideoInput onTranslate={sendFrame} />
+      <TextOutput text={prediction} />
+      <SpeechButton text={prediction} />
     </div>
   );
 }
